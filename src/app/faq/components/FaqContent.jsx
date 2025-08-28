@@ -14,8 +14,6 @@ const QuestionsCard = ({
     </AccordionItem>;
 };
 
-
-
 const TopicCard = ({
   title,
   totalCourse
@@ -28,6 +26,9 @@ const TopicCard = ({
       <span className="small">({totalCourse})</span>
     </div>;
 };
+
+
+
 const FaqContent = () => {
   return <section className="pt-5 pb-0 pb-lg-5">
       <Container>
