@@ -96,7 +96,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const { data } = await axios.get('https://eduglobal-servernew-1.onrender.com/api/courses');
+        const { data } = await axios.get('http://localhost:5000/api/courses');
         console.log("Backend response:", data);
         setCourses(data.courses || []);
       } catch (error) {

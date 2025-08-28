@@ -29,7 +29,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
     }
     try {
       const response = await fetch(
-        `https://eduglobal-servernew-1.onrender.com/api/courses/${courseId}/lectures`
+        `http://localhost:5000/api/courses/${courseId}/lectures`
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch lectures: ${response.statusText}`);
@@ -57,7 +57,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
 
     try {
       const response = await fetch(
-        `https://eduglobal-servernew-1.onrender.com/api/lectures/${lectureId}`,
+        `http://localhost:5000/api/lectures/${lectureId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -86,7 +86,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
 
     try {
       const response = await fetch(
-        `https://eduglobal-servernew-1.onrender.com/api/topics/${topicId}`,
+        `http://localhost:5000/api/topics/${topicId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

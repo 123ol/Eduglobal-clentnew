@@ -19,7 +19,7 @@ export const getAllStudents = async (search = '') => {
     throw new Error(`Auth error: ${err.message}`);
   }
 
-  const url = new URL('https://eduglobal-servernew-1.onrender.com/api/total');
+  const url = new URL('http://localhost:5000/api/total');
   if (search) {
     url.searchParams.append('search', encodeURIComponent(search));
   }

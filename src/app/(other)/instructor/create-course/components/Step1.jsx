@@ -35,7 +35,7 @@ const Step1 = ({ stepperInstance, onCourseCreated }) => {
   // Fetch categories from backend
   const fetchCategories = async () => {
     try {
-      const response = await fetch('https://eduglobal-servernew-1.onrender.com/api/categories');
+      const response = await fetch('http://localhost:5000/api/categories');
       if (!response.ok) {
         throw new Error(`Failed to fetch categories: ${response.statusText}`);
       }
@@ -178,7 +178,7 @@ const Step1 = ({ stepperInstance, onCourseCreated }) => {
         return null;
       }
 
-      const response = await fetch('https://eduglobal-servernew-1.onrender.com/api/courses', {
+      const response = await fetch('http://localhost:5000/api/courses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

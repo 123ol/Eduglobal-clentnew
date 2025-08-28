@@ -28,7 +28,7 @@ const StudentCard = ({ id, location, progress, totalCourse, name, email, date, a
     }
 
     try {
-      const response = await fetch(`https://eduglobal-servernew-1.onrender.com/api/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
