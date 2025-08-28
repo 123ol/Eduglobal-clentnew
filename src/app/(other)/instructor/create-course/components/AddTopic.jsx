@@ -123,7 +123,7 @@ const AddTopic = ({ lectureId, onTopicAdded }) => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/lectures/${lectureId}/topics`,
+        `https://eduglobal-servernew-1.onrender.com/api/lectures/${lectureId}/topics`,
         {
           method: "POST",
           headers: {

@@ -57,7 +57,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/lectures/${lectureId}`,
+        `https://eduglobal-servernew-1.onrender.com/api/lectures/${lectureId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -86,7 +86,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/topics/${topicId}`,
+        `https://eduglobal-servernew-1.onrender.com/api/topics/${topicId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

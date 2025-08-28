@@ -257,7 +257,7 @@ const PriceCard = ({ course, lectures = [] }) => {
   const onSuccess = async (response) => {
     try {
       // Verify payment with backend
-      const verifyResponse = await fetch(`http://localhost:5000/api/payments/verify/${response.reference}`, {
+      const verifyResponse = await fetch(`https://eduglobal-servernew-1.onrender.com/api/payments/verify/${response.reference}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -452,9 +452,16 @@ const CourseDetails = () => {
             <Row className="g-4">
               <Col xs={12}>
                 <h2>{course?.title || 'The Complete Digital Marketing Course - 12 Courses in 1'}</h2>
-                <p>
-                  {course?.shortDescription || 'Satisfied conveying a dependent contented he gentleman agreeable do be. Warrant private blushes removed an in equally totally if. Delivered dejection necessary objection do Mr prevailed. Mr feeling does chiefly cordial in do.'}
-                </p>
+              <Card className="w-100">
+  <CardBody className="p-3 p-sm-4">
+    <p className="fw-light h6 fs-6 fs-sm-5 fs-md-4 text-break">
+      {course?.shortDescription}
+    </p>
+  </CardBody>
+</Card>
+
+
+                
                 <ul className="list-inline mb-0">
                   <li className="list-inline-item fw-light h6 me-3 mb-1 mb-sm-0">
                     <FaStar className="me-2" />
