@@ -1,0 +1,9 @@
+export const currency = 'N';
+export const currentYear = new Date().getFullYear();
+export const developedByLink = 'https://Kratos.com/';
+export const developedBy = 'Kratos';
+export const contactUs = 'mailto:kratosolomon25@gmail.com';
+export const buyLink = '';
+export const basePath = '';
+export const DEFAULT_PAGE_TITLE = 'EduGlobal Next | LMS,Education and Course Theme';
+export const colorVariants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'dark', 'light'];

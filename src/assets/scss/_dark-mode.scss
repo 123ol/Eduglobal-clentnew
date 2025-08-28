@@ -1,0 +1,207 @@
+// Theme Component
+// Dark mode related CSS
+[data-bs-theme="dark"] {
+  // Dark mode styles
+  --bs-light: #2a2c31;
+  --bs-dark: #0f0f10;
+  --bs-dark-rgb: 15, 15, 16;
+  --bs-gray-200: #464950;
+  --bs-gray-300: #3e3e40;
+  --bs-gray-400: #a1a1a8;
+  --bs-gray-500: #bfc0c9;
+  --bs-gray-600: #c5c6cc;
+  --bs-gray-700: #f3f1f1;
+  --bs-gray-800: #f7f5f5;
+  --bs-gray-900: #fff;
+  --bs-body-bg: #222529;
+  --bs-body-bg-rgb: #222529;
+  --bs-body-color: #a1a1a8;
+  --bs-body-color-rgb: rgba(176, 176, 184);
+  --bs-border-color: rgba(255, 255, 255, 0.07);
+  --bs-mode: #1b1e21;
+  --bs-heading-color: var(--bs-gray-900);
+  --bs-primary: #4dabf7; // Added for button/link colors
+  --bs-primary-dark: #339af0; // Added for hover states
+
+  .navbar {
+    --bs-navbar-color: var(--bs-gray-900); // #fff for visibility
+    background-color: var(--bs-body-bg); // Ensure navbar background is #222529
+  }
+  .navbar-dark {
+    --bs-navbar-color: var(--bs-gray-900);
+  }
+  .nav {
+    --bs-nav-link-color: var(--bs-gray-900); // Override to #fff
+  }
+  .navbar-nav {
+    .nav-link {
+      color: var(--bs-gray-900); // #fff for Home, Course Grid Classic, etc.
+      padding: 0.25rem 0.75rem;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: var(--bs-primary); // #4dabf7
+      }
+
+      &.active {
+        color: var(--bs-primary); // #4dabf7 for Home
+        font-weight: 500;
+      }
+    }
+
+    .menu-btn {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+
+      &.btn-primary {
+        background-color: var(--bs-primary); // #4dabf7 for Sign Up
+        border: 1px solid var(--bs-primary);
+        color: var(--bs-gray-900); // #fff
+
+        &:hover {
+          background-color: var(--bs-primary-dark); // #339af0
+          border-color: var(--bs-primary-dark);
+        }
+      }
+
+      &.btn-outline-primary {
+        border: 1px solid var(--bs-gray-900); // #fff for Sign In
+        color: var(--bs-gray-900);
+        background-color: transparent;
+
+        &:hover {
+          background-color: var(--bs-primary); // #4dabf7
+          color: var(--bs-gray-900);
+          border-color: var(--bs-primary);
+        }
+      }
+
+      &.btn-sm {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+      }
+
+      &.active {
+        font-weight: 500;
+      }
+    }
+  }
+  .nav-category {
+    border-bottom: solid 1px var(--bs-light);
+  }
+  .dropdown-menu {
+    --bs-dropdown-bg: var(--bs-dark);
+    --bs-dropdown-link-disabled-color: var(--bs-gray-200);
+    box-shadow: none;
+    --bs-dropdown-divider-bg: var(--bs-body-bg);
+  }
+  .dropdown-menu:before {
+    background-color: var(--bs-dark) !important;
+    box-shadow: none !important;
+  }
+  .card {
+    --bs-card-cap-bg: var(--bs-mode);
+    --bs-card-bg: var(--bs-mode);
+  }
+  .btn-white {
+    &.active, &:active, &:focus, &:hover {
+      background: var(--bs-gray-800);
+    }
+  }
+  .alert-light {
+    --bs-alert-bg: var(--bs-gray-600);
+    --bs-alert-border-color: var(--bs-gray-600);
+  }
+  .btn-dark {
+    --bs-btn-bg: var(--bs-dark) !important;
+    --bs-btn-border-color: var(--bs-dark) !important;
+  }
+  hr {
+    color: var(--bs-gray-300);
+  }
+  .modal {
+    --bs-modal-bg: var(--bs-body-bg);
+    --bs-modal-border-color: var(--bs-border-color-translucent);
+    --bs-modal-footer-border-color: var(--bs-border-color);
+  }
+  .table-light {
+    --bs-table-bg: var(--bs-light);
+    --bs-table-color: var(--bs-gray-900);
+  }
+  .offcanvas, .offcanvas-xxl, .offcanvas-xl, .offcanvas-lg, .offcanvas-md, .offcanvas-sm {
+    --bs-offcanvas-bg: var(--bs-body-bg);
+  }
+  .fill-primary {
+    fill: var(--bs-primary) !important;
+  }
+  .fill-dark {
+    fill: var(--bs-dark) !important;
+  }
+  .text-dark {
+    color: var(--bs-dark) !important;
+  }
+  .bg-light {
+    background-color: var(--bs-light) !important;
+  }
+  .border-light {
+    border-color: var(--bs-light) !important;
+  }
+  .bg-body {
+    background-color: var(--bs-body-bg) !important;
+  }
+  .shadow, .shadow-lg, .shadow-sm {
+    box-shadow: none !important;
+  }
+  .navbar-nav .dropdown .dropdown-submenu:hover>.dropdown-menu {
+    box-shadow: none;
+  }
+  .btn-close {
+    filter: invert(1) grayscale(100%) brightness(300%);
+  }
+  .accordion.accordion-shadow .accordion-button {
+    box-shadow: none;
+    border: 1px solid var(--bs-gray-200);
+  }
+  .top-bar {
+    box-shadow: none;
+  }
+  .table {
+    --bs-table-hover-bg: var(--bs-light);
+  }
+  .choices {
+    .choices__list--dropdown {
+      background: var(--bs-dark);
+    }
+    &[data-type*=select-one] .choices__input {
+      background: var(--bs-dark);
+    }
+  }
+}
+
+// Dark mode switch style
+.dark-mode-switch .btn.active {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-body-bg) !important;
+  color: $headings-color;
+  box-shadow: $box-shadow;
+}
+
+// Dark mode item hide and show
+.dark-mode-item {
+  display: none !important;
+}
+
+[data-bs-theme="dark"] {
+  .dark-mode-item {
+    display: inline-block !important;
+  }
+  .light-mode-item {
+    display: none !important;
+  }
+}
