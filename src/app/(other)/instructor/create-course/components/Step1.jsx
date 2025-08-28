@@ -35,7 +35,7 @@ const Step1 = ({ stepperInstance, onCourseCreated }) => {
   // Fetch categories from backend
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories');
+      const response = await fetch('https://eduglobal-servernew-1.onrender.com/api/categories');
       if (!response.ok) {
         throw new Error(`Failed to fetch categories: ${response.statusText}`);
       }

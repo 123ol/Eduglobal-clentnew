@@ -144,7 +144,7 @@ const Courses = ({ courseKey, courses, categoriesData }) => {
 
 // PopularCourse component
 const PopularCourse = () => {
-  const { data: categoriesData, loading: catLoading, error: catError } = useFetchData('http://localhost:5000/api/categories');
+  const { data: categoriesData, loading: catLoading, error: catError } = useFetchData('https://eduglobal-servernew-1.onrender.com/api/categories');
   const { data: coursesData, loading: courseLoading, error: courseError } = useFetchData('http://localhost:5000/api/courses');
 
   // State for lecture counts
