@@ -265,7 +265,7 @@ const PriceCard = ({ course, lectures = [] }) => {
 
       if (verifyResponse.ok && verifyData.status === 'success') {
         // Enroll user in the course
-        const enrollResponse = await fetch(`http://localhost:5000/api/courses/${id}/enroll`, {
+        const enrollResponse = await fetch(`https://eduglobal-servernew-1.onrender.com/api/courses/${id}/enroll`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -414,13 +414,13 @@ const PricingAndTags = ({ course, lectures = [] }) => {
 
 const CourseDetails = () => {
   const { id } = useParams();
-  const { data: courseData, loading: courseLoading, error: courseError } = useFetchData(`http://localhost:5000/api/courses/${id}`);
+  const { data: courseData, loading: courseLoading, error: courseError } = useFetchData(`https://eduglobal-servernew-1.onrender.com/api/courses/${id}`);
   const [lectures, setLectures] = useState([]);
 
   useEffect(() => {
     const fetchLectures = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/courses/${id}/lectures`);
+        const response = await fetch(`https://eduglobal-servernew-1.onrender.com/api/courses/${id}/lectures`);
         if (response.ok) {
           const data = await response.json();
           setLectures(Array.isArray(data) ? data : []);

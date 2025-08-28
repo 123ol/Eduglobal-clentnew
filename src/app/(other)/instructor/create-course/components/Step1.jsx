@@ -178,7 +178,7 @@ const Step1 = ({ stepperInstance, onCourseCreated }) => {
         return null;
       }
 
-      const response = await fetch('http://localhost:5000/api/courses', {
+      const response = await fetch('https://eduglobal-servernew-1.onrender.com/api/courses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

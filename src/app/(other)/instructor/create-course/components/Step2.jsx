@@ -29,7 +29,7 @@ const Step2 = ({ stepperInstance, courseId }) => {
     }
     try {
       const response = await fetch(
-        `http://localhost:5000/api/courses/${courseId}/lectures`
+        `https://eduglobal-servernew-1.onrender.com/api/courses/${courseId}/lectures`
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch lectures: ${response.statusText}`);
