@@ -39,7 +39,7 @@ const SupportRequests = () => {
   return <Col xxl={4}>
       <Card className="shadow h-100">
         <CardHeader className="border-bottom d-flex justify-content-between align-items-center p-4">
-          <h5 className="card-header-title">Support Requests</h5>
+          <h5 className="card-header-title"> certificate Requests</h5>
           <Link to="#" className="btn btn-link p-0 mb-0">
             View all
           </Link>

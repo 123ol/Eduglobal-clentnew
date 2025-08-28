@@ -44,7 +44,7 @@ const TopInstructors = () => {
   return <Col lg={6} xxl={4}>
       <Card className="shadow h-100">
         <CardHeader className="border-bottom d-flex justify-content-between align-items-center p-4">
-          <h5 className="card-header-title">Top Instructors</h5>
+          <h5 className="card-header-title">Top Student</h5>
           <Link to="#" className="btn btn-link p-0 mb-0">
             View all
           </Link>

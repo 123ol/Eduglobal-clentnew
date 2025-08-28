@@ -156,7 +156,7 @@ const Hero = () => {
               <li className="list-inline-item me-2 icons-center">
 
                 <BsPatchCheckFill className="me-1 text-dark" />
-                Get certificate on Blockchine
+               Get a certificate in Blockchain
               </li>
               <li className="list-inline-item icons-center">
 

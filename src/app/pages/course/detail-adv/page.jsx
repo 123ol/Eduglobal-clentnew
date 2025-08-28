@@ -1,4 +1,5 @@
 import Footer from '@/components/Footer';
+import { useAuthContext } from '@/context/useAuthContext';
 import { Fragment, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import 'plyr-react/plyr.css';
@@ -24,9 +25,10 @@ import { usePaystackPayment } from 'react-paystack';
 // Custom hook for fetching data
 const useFetchData = (url) => {
   const [data, setData] = useState(null);
+   const [loginNotice, setLoginNotice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const { user } = useAuthContext();
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,6 +47,15 @@ const useFetchData = (url) => {
 
   return { data, loading, error };
 };
+
+ const handleBuyNow = () => {
+    if (!user) {
+      setLoginNotice(true); // show "please log in" message
+      return;
+    }
+    setLoginNotice(false);
+    initializePayment(onSuccess, onClose);
+  };
 
 // Dummy data for faqsData
 const faqsData = [
@@ -244,68 +255,88 @@ const Faqs = ({ faqs = faqsData }) => {
 const PriceCard = ({ course, lectures = [] }) => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [loginNotice, setLoginNotice] = useState(false); // ✅ new
   const { id } = useParams();
+  const { user } = useAuthContext(); // ✅ access auth user
 
-  // Paystack configuration
+  // Paystack config
   const config = {
     reference: `ref_${Math.random().toString(36).substring(2, 15)}`,
-    email: "user@example.com", // Replace with actual user email, possibly from auth context
-    amount: (course?.price || 0) * 100, // Paystack expects amount in kobo
-    publicKey:"pk_test_c6fd9e48f0a65700fd66cc49bc870706b3a8611c", // Add your Paystack public key in .env
-  };
-
-  const onSuccess = async (response) => {
-    try {
-      // Verify payment with backend
-      const verifyResponse = await fetch(`https://eduglobal-servernew-1.onrender.com/api/payments/verify/${response.reference}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const verifyData = await verifyResponse.json();
-
-      if (verifyResponse.ok && verifyData.status === 'success') {
-        // Enroll user in the course
-        const enrollResponse = await fetch(`https://eduglobal-servernew-1.onrender.com/api/courses/${id}/enroll`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const enrollData = await enrollResponse.json();
-
-        if (enrollResponse.ok) {
-          setPaymentStatus('success');
-          setErrorMessage(null);
-        } else {
-          setPaymentStatus('error');
-          setErrorMessage(enrollData.message || 'Failed to enroll in course.');
-        }
-      } else {
-        setPaymentStatus('error');
-        setErrorMessage(verifyData.message || 'Payment verification failed.');
-      }
-    } catch (err) {
-      setPaymentStatus('error');
-      setErrorMessage('An error occurred during payment verification.');
-    }
-  };
-
-  const onClose = () => {
-    setPaymentStatus('closed');
-    setErrorMessage('Payment window closed. Please try again.');
+    email: user?.email || "guest@example.com", // use actual user email
+    amount: (course?.price || 0) * 100,
+    publicKey: "pk_test_c6fd9e48f0a65700fd66cc49bc870706b3a8611c",
   };
 
   const initializePayment = usePaystackPayment(config);
 
+  const onSuccess = async (response) => {
+    try {
+      const verifyResponse = await fetch(
+        `https://eduglobal-servernew-1.onrender.com/api/payments/verify/${response.reference}`,
+        { method: "POST", headers: { "Content-Type": "application/json" } }
+      );
+      const verifyData = await verifyResponse.json();
+
+      if (verifyResponse.ok && verifyData.status === "success") {
+        const enrollResponse = await fetch(
+          `https://eduglobal-servernew-1.onrender.com/api/courses/${id}/enroll`,
+          { method: "POST", headers: { "Content-Type": "application/json" } }
+        );
+        const enrollData = await enrollResponse.json();
+
+        if (enrollResponse.ok) {
+          setPaymentStatus("success");
+          setErrorMessage(null);
+        } else {
+          setPaymentStatus("error");
+          setErrorMessage(enrollData.message || "Failed to enroll in course.");
+        }
+      } else {
+        setPaymentStatus("error");
+        setErrorMessage(verifyData.message || "Payment verification failed.");
+      }
+    } catch (err) {
+      setPaymentStatus("error");
+      setErrorMessage("An error occurred during payment verification.");
+    }
+  };
+
+  const onClose = () => {
+    setPaymentStatus("closed");
+    setErrorMessage("Payment window closed. Please try again.");
+  };
+
+  // ✅ handle Buy Now click
+  const handleBuyNow = () => {
+    if (!user) {
+      setLoginNotice(true); // show warning
+      return;
+    }
+    setLoginNotice(false);
+    initializePayment(onSuccess, onClose);
+  };
+
   return (
     <Card className="card-body border p-4">
-      {paymentStatus === 'success' && (
+      {loginNotice && (
+        <Alert
+          variant="warning"
+          dismissible
+          onClose={() => setLoginNotice(false)}
+        >
+          ⚠️ Please login before purchasing this course.
+        </Alert>
+      )}
+      {paymentStatus === "success" && (
         <Alert variant="success">Successfully enrolled in the course!</Alert>
       )}
-      {paymentStatus === 'error' && (
+      {paymentStatus === "error" && (
         <Alert variant="danger">{errorMessage}</Alert>
       )}
-      {paymentStatus === 'closed' && (
+      {paymentStatus === "closed" && (
         <Alert variant="warning">{errorMessage}</Alert>
       )}
+
       <div className="d-flex justify-content-between align-items-center">
         <h3 className="fw-bold mb-0 me-2">
           {currency}{course?.price || 0}
@@ -324,10 +355,10 @@ const PriceCard = ({ course, lectures = [] }) => {
       </div>
 
       <div className="mt-3 d-grid">
-        <Button
+         <Button
           variant="success"
-          onClick={() => initializePayment(onSuccess, onClose)}
-          disabled={paymentStatus === 'success'}
+          onClick={handleBuyNow}
+          disabled={paymentStatus === "success"}
         >
           Buy now
         </Button>

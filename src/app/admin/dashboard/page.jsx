@@ -21,7 +21,7 @@ const AdminDashboardPage = () => {
       </Row>
       <Row className="g-4">
         <TopInstructors />
-        <NoticeBoard />
+        {/* <NoticeBoard /> */}
         <TrafficSourcesChart />
       </Row>
     </>;

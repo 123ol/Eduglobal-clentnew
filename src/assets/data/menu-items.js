@@ -230,6 +230,17 @@ export const APP_MENU_ITEMS = [
     label: 'Contact Us',
     url: '/pages/about/contact-us'
   },
+{
+      key: 'signIn',
+      label: 'Sign In',
+      url: '/auth/sign-in',
+      parentKey: 'authentication'
+    }, {
+      key: 'signUp',
+      label: 'Sign Up',
+      url: '/auth/sign-up',
+      parentKey: 'authentication'
+    }
 ];
 
 export const ADMIN_MENU_ITEMS = [{

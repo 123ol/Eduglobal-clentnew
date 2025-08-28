@@ -17,15 +17,15 @@ const MenuItemWithChildren = ({
   const Icon = item.icon;
   return <div className={itemClassName}>
       <div className={linkClassName} data-bs-toggle="collapse" role="button" aria-expanded={isOpen} onClick={() => toggle()}>
-        {Icon && <Icon className="me-2" />} {item.label}
+        {Icon && <Icon className="me-2 text-white " />} {item.label} 
       </div>
 
-      <Collapse in={isOpen} className="nav flex-column">
+      <Collapse in={isOpen} className="nav flex-column text-white">
         <div>
           {(item.children ?? []).map((child, index) => <Fragment key={index + child.key + index}>
-              {child.children ? <MenuItemWithChildren item={child} activeMenuItems={activeMenuItems} itemClassName={itemClassName} linkClassName={clsx('nav-link', {
+              {child.children ? <MenuItemWithChildren item={child} activeMenuItems={activeMenuItems} itemClassName={itemClassName} linkClassName={clsx('nav-link text-white ', {
             active: activeMenuItems?.includes(child.key)
-          })} /> : <MenuItem item={child} itemClassName="nav-item" linkClassName={clsx('nav-link', {
+          })} /> : <MenuItem item={child} itemClassName="nav-item" linkClassName={clsx('nav-link text-white', {
             active: activeMenuItems?.includes(child.key)
           })} />}
             </Fragment>)}
@@ -42,7 +42,7 @@ const MenuItem = ({
   return <li className={itemClassName}>
       <Link className={linkClassName} to={item.url ?? ''} target={item.target}>
         {Icon && <Icon className="me-2" />} {item.label}
-        {item.badge && <Badge className="ms-2 rounded-circle" bg="success">
+        {item.badge && <Badge className="ms-2 rounded-circle text-white" bg="success">
             {item.badge}
           </Badge>}
       </Link>
@@ -71,7 +71,7 @@ const AdminMenu = () => {
   useEffect(() => {
     activeMenu();
   }, [activeMenu, menuItems]);
-  return <ul className="navbar-nav flex-column">
+  return <ul className="navbar-nav flex-column text-white">
       {(menuItems ?? []).map((item, idx) => {
       return <Fragment key={idx + item.key}>
             {item.isTitle ? <li className="nav-item ms-2 my-2">{item.label}</li> : item.children ? <MenuItemWithChildren item={item} activeMenuItems={activeMenuItems} itemClassName="nav-item" linkClassName={clsx('nav-link', {
