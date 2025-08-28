@@ -32,7 +32,7 @@ const AddLecture = ({ courseId, onLectureAdded }) => {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:5000/api/courses/${courseId}/lectures`,
+        `https://eduglobal-servernew-1.onrender.com/api/courses/${courseId}/lectures`,
         {
           method: "POST",
           headers: {

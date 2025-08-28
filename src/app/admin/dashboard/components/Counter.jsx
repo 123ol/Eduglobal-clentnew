@@ -47,7 +47,7 @@ const Counter = () => {
   // Fetch courses
   const fetchCourses = async (token) => {
     try {
-      const coursesResponse = await fetch('http://localhost:5000/api/courses', {
+      const coursesResponse = await fetch('https://eduglobal-servernew-1.onrender.com/api/courses', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -73,7 +73,7 @@ const Counter = () => {
   // Fetch total students
   const fetchStudents = async (token) => {
     try {
-      const studentsResponse = await fetch('http://localhost:5000/api/total', {
+      const studentsResponse = await fetch('https://eduglobal-servernew-1.onrender.com/api/total', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

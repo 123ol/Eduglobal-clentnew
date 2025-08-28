@@ -144,8 +144,8 @@ const Courses = ({ courseKey, courses, categoriesData }) => {
 
 // PopularCourse component
 const PopularCourse = () => {
-  const { data: categoriesData, loading: catLoading, error: catError } = useFetchData('http://localhost:5000/api/categories');
-  const { data: coursesData, loading: courseLoading, error: courseError } = useFetchData('http://localhost:5000/api/courses');
+  const { data: categoriesData, loading: catLoading, error: catError } = useFetchData('https://eduglobal-servernew-1.onrender.com/api/categories');
+  const { data: coursesData, loading: courseLoading, error: courseError } = useFetchData('https://eduglobal-servernew-1.onrender.com/api/courses');
 
   // State for lecture counts
   const [lectureCounts, setLectureCounts] = useState({});
@@ -157,7 +157,7 @@ const PopularCourse = () => {
         const counts = {};
         for (const course of coursesData.courses) {
           try {
-            const response = await fetch(`http://localhost:5000/api/courses/${course._id}/lectures`);
+            const response = await fetch(`https://eduglobal-servernew-1.onrender.com/api/courses/${course._id}/lectures`);
             if (response.ok) {
               const data = await response.json();
               console.log(`Lecture data for course ${course._id}:`, data);

@@ -307,9 +307,9 @@ const Courses = () => {
   const { isTrue, toggle } = useToggle();
   const { width } = useViewPort();
   const { data: coursesData, error: courseError, loading: courseLoading } =
-    useFetchData('http://localhost:5000/api/courses');
+    useFetchData('https://eduglobal-servernew-1.onrender.com/api/courses');
   const { data: categories, error: categoryError, loading: categoryLoading } =
-    useFetchData('http://localhost:5000/api/categories');
+    useFetchData('https://eduglobal-servernew-1.onrender.com/api/categories');
 
   const courses = Array.isArray(coursesData) ? coursesData : coursesData?.courses || [];
   const [currentPage, setCurrentPage] = useState(1);

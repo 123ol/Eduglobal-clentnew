@@ -40,7 +40,7 @@ const SignUpForm = () => {
         phoneNumber: data.phoneNumber,
         password: data.password,
       };
-      const url = 'http://localhost:5000/api/auth/register';
+      const url = 'https://eduglobal-servernew-1.onrender.com/api/auth/register';
       console.log('Request URL:', url);
       console.log('Request Payload:', payload);
       const res = await axios.post(url, payload, {
