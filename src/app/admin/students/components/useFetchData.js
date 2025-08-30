@@ -1,32 +1,30 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { getAllStudents } from './data';
 
-export const useFetchData = (fetchFn, options = {}) => {
-  const [data, setData] = useState(null);
+const useFetchData = (search = '') => {
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Memoize fetchFn to ensure stable reference
-  const memoizedFetchFn = useMemo(() => fetchFn, [fetchFn]);
-
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    try {
       setLoading(true);
       setError(null);
-      try {
-        const result = await memoizedFetchFn();
-        console.log('useFetchData result:', result);
-        setData(result);
-      } catch (err) {
-        console.error('useFetchData error:', err.message);
-        setError(err.message);
-        if (options.onError) options.onError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const students = await getAllStudents(search);
+      setData(students);
+    } catch (err) {
+      console.error('useFetchData error:', err.message);
+      setError(err.message || 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  }, [search]);
 
+  useEffect(() => {
     fetchData();
-  }, [memoizedFetchFn, options.onError]);
+  }, [fetchData]);
 
   return { data, loading, error };
 };
+
+export { useFetchData };

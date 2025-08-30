@@ -23,6 +23,7 @@
     "clsx": "^2.1.1",
     "cookies-next": "^4.2.1",
     "dompurify": "^3.2.6",
+    "ethers": "^6.15.0",
     "firebase": "^12.1.0",
     "glightbox": "^3.3.0",
     "imagesloaded": "^5.0.0",

@@ -20,12 +20,11 @@ import TopbarMenuToggler from '@/components/TopNavbar/components/TopbarMenuToggl
 import { Button, Card, CardHeader, CardBody, Col, Collapse, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Alert } from 'react-bootstrap';
 import { BsLockFill, BsPatchExclamationFill } from 'react-icons/bs';
 import { FaAngleDown, FaAngleUp, FaBookOpen, FaCheckCircle, FaClock, FaCopy, FaFacebookSquare, FaGlobe, FaLinkedin, FaMedal, FaPlay, FaRegStar, FaShareAlt, FaSignal, FaStar, FaStarHalfAlt, FaTwitterSquare, FaUserClock, FaUserGraduate } from 'react-icons/fa';
-import { usePaystackPayment } from 'react-paystack';
 
 // Custom hook for fetching data
 const useFetchData = (url) => {
   const [data, setData] = useState(null);
-   const [loginNotice, setLoginNotice] = useState(false);
+  const [loginNotice, setLoginNotice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuthContext();
@@ -45,17 +44,8 @@ const useFetchData = (url) => {
     fetchData();
   }, [url]);
 
-  return { data, loading, error };
+  return { data, loading, error, loginNotice, setLoginNotice };
 };
-
- const handleBuyNow = () => {
-    if (!user) {
-      setLoginNotice(true); // show "please log in" message
-      return;
-    }
-    setLoginNotice(false);
-    initializePayment(onSuccess, onClose);
-  };
 
 // Dummy data for faqsData
 const faqsData = [
@@ -253,88 +243,90 @@ const Faqs = ({ faqs = faqsData }) => {
 };
 
 const PriceCard = ({ course, lectures = [] }) => {
-  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [enrollmentStatus, setEnrollmentStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [loginNotice, setLoginNotice] = useState(false); // ✅ new
+  const [loginNotice, setLoginNotice] = useState(false);
   const { id } = useParams();
-  const { user } = useAuthContext(); // ✅ access auth user
+  const { user } = useAuthContext();
 
-  // Paystack config
-  const config = {
-    reference: `ref_${Math.random().toString(36).substring(2, 15)}`,
-    email: user?.email || "guest@example.com", // use actual user email
-    amount: (course?.price || 0) * 100,
-    publicKey: "pk_test_c6fd9e48f0a65700fd66cc49bc870706b3a8611c",
-  };
-
-  const initializePayment = usePaystackPayment(config);
-
-  const onSuccess = async (response) => {
-    try {
-      const verifyResponse = await fetch(
-        `https://eduglobal-servernew-1.onrender.com/api/payments/verify/${response.reference}`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
-      );
-      const verifyData = await verifyResponse.json();
-
-      if (verifyResponse.ok && verifyData.status === "success") {
-        const enrollResponse = await fetch(
-          `https://eduglobal-servernew-1.onrender.com/api/courses/${id}/enroll`,
-          { method: "POST", headers: { "Content-Type": "application/json" } }
-        );
-        const enrollData = await enrollResponse.json();
-
-        if (enrollResponse.ok) {
-          setPaymentStatus("success");
-          setErrorMessage(null);
-        } else {
-          setPaymentStatus("error");
-          setErrorMessage(enrollData.message || "Failed to enroll in course.");
+  const getAuthTokenFromCookie = () => {
+    const cookieName = "_EduGlobal_AUTH_KEY_=";
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      let c = cookie.trim();
+      if (c.startsWith(cookieName)) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(c.substring(cookieName.length)));
+          return parsed.token;
+        } catch (err) {
+          console.error("Error parsing auth cookie:", err);
+          return null;
         }
-      } else {
-        setPaymentStatus("error");
-        setErrorMessage(verifyData.message || "Payment verification failed.");
       }
-    } catch (err) {
-      setPaymentStatus("error");
-      setErrorMessage("An error occurred during payment verification.");
     }
+    console.warn("Auth cookie not found");
+    return null;
   };
 
-  const onClose = () => {
-    setPaymentStatus("closed");
-    setErrorMessage("Payment window closed. Please try again.");
-  };
-
-  // ✅ handle Buy Now click
-  const handleBuyNow = () => {
-    if (!user) {
-      setLoginNotice(true); // show warning
+  const handleBuyNow = async () => {
+    if (!user || !user.email) {
+      setLoginNotice(true);
       return;
     }
     setLoginNotice(false);
-    initializePayment(onSuccess, onClose);
+
+    try {
+      const token = getAuthTokenFromCookie();
+      if (!token) {
+        setEnrollmentStatus("error");
+        setErrorMessage("Authentication token not found. Please log in again.");
+        return;
+      }
+
+      const enrollResponse = await fetch(
+        `https://eduglobal-servernew-1.onrender.com/api/courses/${id}/enroll`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const enrollData = await enrollResponse.json();
+      if (enrollResponse.ok) {
+        setEnrollmentStatus("success");
+        setErrorMessage(null);
+      } else {
+        setEnrollmentStatus("error");
+        if (enrollResponse.status === 401) {
+          setErrorMessage("Session expired. Please log in again.");
+        } else if (enrollResponse.status === 404) {
+          setErrorMessage("Course not found. Please try another course.");
+        } else {
+          setErrorMessage(enrollData.message || "Failed to enroll in course.");
+        }
+      }
+    } catch (err) {
+      console.error("Enrollment Error:", err);
+      setEnrollmentStatus("error");
+      setErrorMessage("Network error. Please check your connection and try again.");
+    }
   };
 
   return (
     <Card className="card-body border p-4">
       {loginNotice && (
-        <Alert
-          variant="warning"
-          dismissible
-          onClose={() => setLoginNotice(false)}
-        >
-          ⚠️ Please login before purchasing this course.
+        <Alert variant="warning" dismissible onClose={() => setLoginNotice(false)}>
+          ⚠️ Please login before enrolling in this course.
         </Alert>
       )}
-      {paymentStatus === "success" && (
+      {enrollmentStatus === "success" && (
         <Alert variant="success">Successfully enrolled in the course!</Alert>
       )}
-      {paymentStatus === "error" && (
+      {enrollmentStatus === "error" && (
         <Alert variant="danger">{errorMessage}</Alert>
-      )}
-      {paymentStatus === "closed" && (
-        <Alert variant="warning">{errorMessage}</Alert>
       )}
 
       <div className="d-flex justify-content-between align-items-center">
@@ -355,12 +347,12 @@ const PriceCard = ({ course, lectures = [] }) => {
       </div>
 
       <div className="mt-3 d-grid">
-         <Button
+        <Button
           variant="success"
           onClick={handleBuyNow}
-          disabled={paymentStatus === "success"}
+          disabled={enrollmentStatus === "success"}
         >
-          Buy now
+          Enroll now
         </Button>
       </div>
 
@@ -483,16 +475,13 @@ const CourseDetails = () => {
             <Row className="g-4">
               <Col xs={12}>
                 <h2>{course?.title || 'The Complete Digital Marketing Course - 12 Courses in 1'}</h2>
-              <Card className="w-100">
-  <CardBody className="p-3 p-sm-4">
-    <p className="fw-light h6 fs-6 fs-sm-5 fs-md-4 text-break">
-      {course?.shortDescription}
-    </p>
-  </CardBody>
-</Card>
-
-
-                
+                <Card className="w-100">
+                  <CardBody className="p-3 p-sm-4">
+                    <p className="fw-light h6 fs-6 fs-sm-5 fs-md-4 text-break">
+                      {course?.shortDescription}
+                    </p>
+                  </CardBody>
+                </Card>
                 <ul className="list-inline mb-0">
                   <li className="list-inline-item fw-light h6 me-3 mb-1 mb-sm-0">
                     <FaStar className="me-2" />

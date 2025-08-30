@@ -1,14 +1,152 @@
-import courses1 from '@/assets/images/courses/4by3/01.jpg';
-import courses2 from '@/assets/images/courses/4by3/02.jpg';
-import courses3 from '@/assets/images/courses/4by3/03.jpg';
-import courses5 from '@/assets/images/courses/4by3/05.jpg';
-import courses8 from '@/assets/images/courses/4by3/08.jpg';
-import ChoicesFormInput from '@/components/form/ChoicesFormInput';
-import { Button, Card, CardBody, CardHeader, Col, Row } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Button, Card, CardHeader, CardBody, Col, Row, Alert } from 'react-bootstrap';
 import { BsArrowRepeat, BsCheck, BsPlayCircle } from 'react-icons/bs';
 import { FaAngleLeft, FaAngleRight, FaSearch } from 'react-icons/fa';
+import ChoicesFormInput from '@/components/form/ChoicesFormInput';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 const CoursesList = () => {
-  return <Card className="bg-transparent border rounded-3">
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get token from cookies
+        const cookieValue = Cookies.get('_EduGlobal_AUTH_KEY_');
+        console.log('Retrieved cookie value:', cookieValue || 'No cookie found');
+
+        if (!cookieValue) {
+          throw new Error('No authentication token found. Please log in.');
+        }
+
+        // Parse the cookie value to extract the token
+        let token;
+        try {
+          const parsed = JSON.parse(cookieValue);
+          token = parsed.token;
+          if (!token) {
+            throw new Error('Token not found in cookie data.');
+          }
+          console.log('Extracted JWT token:', token);
+        } catch (parseError) {
+          console.error('Error parsing cookie value:', parseError);
+          throw new Error('Invalid cookie format. Please log in again.');
+        }
+
+        // Set up headers with token
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+        console.log('Request headers:', headers);
+
+        // Fetch enrolled courses
+        const response = await axios.get(
+          'https://eduglobal-servernew-1.onrender.com/api/courses/user/courses',
+          { headers }
+        );
+        console.log('Enrolled courses response:', response.data);
+
+        // Handle single object or array response
+        const coursesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.courses || response.data.enrolledCourses || [response.data];
+
+        // Fetch topic details for each lecture to calculate progress
+        const formattedCourses = await Promise.all(
+          coursesData.map(async (course) => {
+            const lectures = course.lectures || [];
+            let totalTopics = 0;
+            let completedTopics = 0;
+
+            // Fetch topics for each lecture
+            const lecturesWithTopics = await Promise.all(
+              lectures.map(async (lecture) => {
+                try {
+                  const topicsResponse = await axios.get(
+                    `https://eduglobal-servernew-1.onrender.com/api/lectures/${lecture._id}/topics`,
+                    { headers }
+                  );
+                  console.log(`Topic API response for lecture ${lecture._id}:`, topicsResponse.data);
+
+                  const topics = topicsResponse.data || [];
+                  totalTopics += topics.length;
+                  completedTopics += topics.filter((topic) => topic.completed).length;
+
+                  return {
+                    _id: lecture._id,
+                    title: lecture.title || 'Untitled Lecture',
+                    topics: topics.map((topic) => ({
+                      id: topic._id,
+                      completed: topic.completed || false,
+                    })),
+                  };
+                } catch (topicError) {
+                  console.error(`Error fetching topics for lecture ${lecture._id}:`, topicError);
+                  return {
+                    _id: lecture._id,
+                    title: lecture.title || 'Untitled Lecture',
+                    topics: [],
+                  };
+                }
+              })
+            );
+
+            return {
+              title: course.title || 'Untitled Course',
+              image: course.courseImage || 'https://via.placeholder.com/100',
+              lectures: lecturesWithTopics.length,
+              totalTopics,
+              completedTopics,
+              courseTime: course.courseTime || 'N/A',
+              level: course.level || 'Beginner',
+            };
+          })
+        );
+
+        setCourses(formattedCourses);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        console.log('Error response:', error.response?.data);
+        if (error.response?.status === 401) {
+          setError('Authentication failed. Please check your login status.');
+        } else if (error.response?.status === 500) {
+          setError('Server error while fetching courses. Please try again later.');
+        } else {
+          setError(error.message || 'Failed to fetch courses. Please try again later.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  if (loading) return <Alert variant="info">Loading courses...</Alert>;
+  if (error) {
+    return (
+      <Alert variant="danger">
+        {error}
+        {error.includes('Authentication failed') && (
+          <div>
+            <Button onClick={() => window.location.href = '/login'} className="mt-2">
+              Go to Login
+            </Button>
+          </div>
+        )}
+      </Alert>
+    );
+  }
+
+  return (
+    <Card className="bg-transparent border rounded-3">
       <CardHeader className="bg-transparent border-bottom">
         <h3 className="mb-0">My Courses List</h3>
       </CardHeader>
@@ -42,10 +180,10 @@ const CoursesList = () => {
                   Course Title
                 </th>
                 <th scope="col" className="border-0">
-                  Total Lectures
+                  Total Topics
                 </th>
                 <th scope="col" className="border-0">
-                  Completed Lecture
+                  Completed Topics
                 </th>
                 <th scope="col" className="border-0 rounded-end">
                   Action
@@ -53,165 +191,67 @@ const CoursesList = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <div className="w-100px">
-                      <img src={courses8} className="rounded" alt="courses" />
-                    </div>
-                    <div className="mb-0 ms-2">
-                      <h6>
-                        <a href="#">Building Scalable APIs with GraphQL</a>
-                      </h6>
-                      <div className="overflow-hidden">
-                        <h6 className="mb-0 text-end">85%</h6>
-                        <div className="progress progress-sm bg-primary bg-opacity-10">
-                          <div className="progress-bar bg-primary aos" role="progressbar" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-                          width: '85%'
-                        }} aria-valuenow={85} aria-valuemin={0} aria-valuemax={100}></div>
+              {courses.map((course, index) => (
+                <tr key={index}>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      <div className="w-100px">
+                        <img src={course.image} className="rounded" alt="course" />
+                      </div>
+                      <div className="mb-0 ms-2">
+                        <h6>
+                          <a href="#">{course.title}</a>
+                        </h6>
+                        <div className="overflow-hidden">
+                          <h6 className="mb-0 text-end">
+                            {course.totalTopics > 0 ? Math.round((course.completedTopics / course.totalTopics) * 100) : 0}%
+                          </h6>
+                          <div className="progress progress-sm bg-primary bg-opacity-10">
+                            <div
+                              className="progress-bar bg-primary aos"
+                              role="progressbar"
+                              data-aos="slide-right"
+                              data-aos-delay={200}
+                              data-aos-duration={1000}
+                              data-aos-easing="ease-in-out"
+                              style={{
+                                width: `${course.totalTopics > 0 ? (course.completedTopics / course.totalTopics) * 100 : 0}%`
+                              }}
+                              aria-valuenow={course.totalTopics > 0 ? (course.completedTopics / course.totalTopics) * 100 : 0}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                            ></div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td>56</td>
-                <td>40</td>
-                <td>
-                  <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0">
-                    <BsPlayCircle className="me-1 icons-center" />
-                    Continue
-                  </Button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <div className="w-100px">
-                      <img src={courses3} className="rounded" alt="courses" />
-                    </div>
-                    <div className="mb-0 ms-2">
-                      <h6>
-                        <a href="#">Create a Design System in Figma</a>
-                      </h6>
-                      <div className="overflow-hidden">
-                        <h6 className="mb-0 text-end">100%</h6>
-                        <div className="progress progress-sm bg-primary bg-opacity-10">
-                          <div className="progress-bar bg-primary aos" role="progressbar" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-                          width: '100%'
-                        }} aria-valuenow={100} aria-valuemin={0} aria-valuemax={100}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>42</td>
-                <td>42</td>
-                <td>
-                  <button className="btn btn-sm btn-success me-1 mb-1 mb-x;-0 disabled">
-                    <BsCheck className="me-1 icons-center" />
-                    Complete
-                  </button>
-                  <Button variant="light" size="sm" className="me-1">
-                    <BsArrowRepeat className="me-1 icons-center" />
-                    Restart
-                  </Button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <div className="w-100px">
-                      <img src={courses5} className="rounded" alt="courses" />
-                    </div>
-                    <div className="mb-0 ms-2">
-                      <h6>
-                        <a href="#">The Complete Web Development in python</a>
-                      </h6>
-                      <div className="overflow-hidden">
-                        <h6 className="mb-0 text-end">60%</h6>
-                        <div className="progress progress-sm bg-primary bg-opacity-10">
-                          <div className="progress-bar bg-primary aos" role="progressbar" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-                          width: '60%'
-                        }} aria-valuenow={60} aria-valuemin={0} aria-valuemax={100}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>28</td>
-                <td>12</td>
-                <td>
-                  <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0">
-                    <BsPlayCircle className="me-1 icons-center" />
-                    Continue
-                  </Button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <div className="w-100px">
-                      <img src={courses1} className="rounded" alt="courses" />
-                    </div>
-                    <div className="mb-0 ms-2">
-                      <h6>
-                        <a href="#">Digital Marketing Masterclass</a>
-                      </h6>
-                      <div className="overflow-hidden">
-                        <h6 className="mb-0 text-end">40%</h6>
-                        <div className="progress progress-sm bg-primary bg-opacity-10">
-                          <div className="progress-bar bg-primary aos" role="progressbar" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-                          width: '40%'
-                        }} aria-valuenow={40} aria-valuemin={0} aria-valuemax={100}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>32</td>
-                <td>18</td>
-                <td>
-                  <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0">
-                    <BsPlayCircle className="me-1 icons-center" />
-                    Continue
-                  </Button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <div className="w-100px">
-                      <img src={courses2} className="rounded" alt="courses" />
-                    </div>
-                    <div className="mb-0 ms-2">
-                      <h6>
-                        <a href="#">Graphic Design Masterclass</a>
-                      </h6>
-                      <div className="overflow-hidden">
-                        <h6 className="mb-0 text-end">90%</h6>
-                        <div className="progress progress-sm bg-primary bg-opacity-10">
-                          <div className="progress-bar bg-primary aos" role="progressbar" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-                          width: '90%'
-                        }} aria-valuenow={90} aria-valuemin={0} aria-valuemax={100}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>16</td>
-                <td>14</td>
-                <td>
-                  <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0">
-                    <BsPlayCircle className="me-1 icons-center" />
-                    Continue
-                  </Button>
-                </td>
-              </tr>
+                  </td>
+                  <td>{course.totalTopics}</td>
+                  <td>{course.completedTopics}</td>
+                  <td>
+                    {course.completedTopics === course.totalTopics && course.totalTopics > 0 ? (
+                     
+                        <button className="btn btn-sm btn-success me-1 mb-1 mb-md-0 disabled">
+                          <BsCheck className="me-1 icons-center" />
+                          Complete
+                        </button>
+                        
+                    
+                    ) : (
+                      <Link to='/student/course-resume'>
+          <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0 icons-center">
+            <BsPlayCircle className="me-1" />
+            Continue
+          </Button></Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
         <div className="d-sm-flex justify-content-sm-between align-items-sm-center mt-4 mt-sm-3">
-          <p className="mb-0 text-center text-sm-start">Showing 1 to 8 of 20 entries</p>
+          <p className="mb-0 text-center text-sm-start">Showing 1 to {courses.length} of {courses.length} entries</p>
           <nav className="d-flex justify-content-center mb-0" aria-label="navigation">
             <ul className="pagination pagination-sm pagination-primary-soft d-inline-block d-md-flex rounded mb-0">
               <li className="page-item mb-0">
@@ -219,20 +259,8 @@ const CoursesList = () => {
                   <FaAngleLeft className="icons-center" />
                 </a>
               </li>
-              <li className="page-item mb-0">
-                <a className="page-link" href="#">
-                  1
-                </a>
-              </li>
               <li className="page-item mb-0 active">
-                <a className="page-link" href="#">
-                  2
-                </a>
-              </li>
-              <li className="page-item mb-0">
-                <a className="page-link" href="#">
-                  3
-                </a>
+                <a className="page-link" href="#">1</a>
               </li>
               <li className="page-item mb-0">
                 <a className="page-link" href="#">
@@ -243,6 +271,8 @@ const CoursesList = () => {
           </nav>
         </div>
       </CardBody>
-    </Card>;
+    </Card>
+  );
 };
+
 export default CoursesList;

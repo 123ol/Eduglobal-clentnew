@@ -1,21 +1,28 @@
+import { useState, useEffect } from 'react';
 import ChoicesFormInput from '@/components/form/ChoicesFormInput';
 import PageMetaData from '@/components/PageMetaData';
-import { Button, Card, CardBody, CardHeader, Col, ProgressBar, Row } from 'react-bootstrap';
+import { Button, Card, CardBody, CardHeader, Col, ProgressBar, Row, Alert } from 'react-bootstrap';
 import { BsArrowRepeat, BsCheck, BsPlayCircle } from 'react-icons/bs';
 import { FaAngleLeft, FaAngleRight, FaSearch } from 'react-icons/fa';
-import { courseData } from './data';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 const CourseData = ({
-  completedLectures,
+  completedTopics,
   image,
   name,
-  totalLectures
+  totalTopics,
 }) => {
-  const percentage = Math.trunc(completedLectures * 100 / totalLectures);
-  return <tr>
+  const percentage = totalTopics > 0 ? Math.trunc((completedTopics * 100) / totalTopics) : 0;
+  return (
+    <tr>
       <td>
         <div className="d-flex align-items-center">
           <div className="w-100px">
-            <img src={image} className="rounded" alt="courses" />
+            <img src={image} className="rounded" alt="course" onError={(e) => {
+              console.error('Image failed to load:', image);
+              e.target.src = 'https://via.placeholder.com/100';
+            }} />
           </div>
           <div className="mb-0 ms-2">
             <h6>
@@ -23,35 +30,180 @@ const CourseData = ({
             </h6>
             <div className="overflow-hidden">
               <h6 className="mb-0 text-end">{percentage}%</h6>
-              <ProgressBar now={percentage} className="progress progress-sm bg-opacity-10 aos" data-aos="slide-right" data-aos-delay={200} data-aos-duration={1000} data-aos-easing="ease-in-out" style={{
-              width: '100%'
-            }} aria-valuenow={100} aria-valuemin={0} aria-valuemax={100} />
+              <ProgressBar
+                now={percentage}
+                className="progress progress-sm bg-opacity-10 aos"
+                data-aos="slide-right"
+                data-aos-delay={200}
+                data-aos-duration={1000}
+                data-aos-easing="ease-in-out"
+                aria-valuenow={percentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
             </div>
           </div>
         </div>
       </td>
-      <td>{totalLectures}</td>
-      <td>{completedLectures}</td>
+      <td>{totalTopics}</td>
+      <td>{completedTopics}</td>
       <td>
-        {percentage === 100 ? <>
-            <button className="btn btn-sm btn-success me-1 mb-1 mb-x;-0 disabled">
+        {percentage === 100 && totalTopics > 0 ? (
+            <button className="btn btn-sm btn-success me-1 mb-1 mb-md-0 disabled">
               <BsCheck className="me-1 icons-center" />
               Complete
             </button>
-            &nbsp;
-            <Button variant="light" size="sm" className="me-1">
-              <BsArrowRepeat className="me-1 icons-center" />
-              Restart
-            </Button>
-          </> : <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0 icons-center">
-            <BsPlayCircle className="me-1 " />
+           
+        ) : (
+          <Link to='/student/course-resume'>
+          <Button variant="primary-soft" size="sm" className="me-1 mb-1 mb-md-0 icons-center">
+            <BsPlayCircle className="me-1" />
             Continue
-          </Button>}
+          </Button></Link>
+        )}
       </td>
-    </tr>;
+    </tr>
+  );
 };
+
 const CourseListPage = () => {
-  return <>
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get token from cookies
+        const cookieValue = Cookies.get('_EduGlobal_AUTH_KEY_');
+        console.log('Retrieved cookie value:', cookieValue || 'No cookie found');
+
+        if (!cookieValue) {
+          throw new Error('No authentication token found. Please log in.');
+        }
+
+        // Parse the cookie value to extract the token
+        let token;
+        try {
+          const parsed = JSON.parse(cookieValue);
+          token = parsed.token;
+          if (!token) {
+            throw new Error('Token not found in cookie data.');
+          }
+          console.log('Extracted JWT token:', token);
+        } catch (parseError) {
+          console.error('Error parsing cookie value:', parseError);
+          throw new Error('Invalid cookie format. Please log in again.');
+        }
+
+        // Set up headers with token
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+        console.log('Request headers:', headers);
+
+        // Fetch enrolled courses
+        const response = await axios.get(
+          'https://eduglobal-servernew-1.onrender.com/api/courses/user/courses',
+          { headers }
+        );
+        console.log('Enrolled courses response:', response.data);
+
+        // Handle single object or array response
+        const coursesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.courses || response.data.enrolledCourses || [response.data];
+
+        // Fetch topic details for each lecture to calculate progress
+        const formattedCourses = await Promise.all(
+          coursesData.map(async (course) => {
+            const lectures = course.lectures || [];
+            let totalTopics = 0;
+            let completedTopics = 0;
+
+            // Fetch topics for each lecture
+            const lecturesWithTopics = await Promise.all(
+              lectures.map(async (lecture) => {
+                try {
+                  const topicsResponse = await axios.get(
+                    `https://eduglobal-servernew-1.onrender.com/api/lectures/${lecture._id}/topics`,
+                    { headers }
+                  );
+                  console.log(`Topic API response for lecture ${lecture._id}:`, topicsResponse.data);
+
+                  const topics = topicsResponse.data || [];
+                  totalTopics += topics.length;
+                  completedTopics += topics.filter((topic) => topic.completed).length;
+
+                  return {
+                    _id: lecture._id,
+                    title: lecture.title || 'Untitled Lecture',
+                    topics: topics.map((topic) => ({
+                      id: topic._id,
+                      completed: topic.completed || false,
+                    })),
+                  };
+                } catch (topicError) {
+                  console.error(`Error fetching topics for lecture ${lecture._id}:`, topicError);
+                  return {
+                    _id: lecture._id,
+                    title: lecture.title || 'Untitled Lecture',
+                    topics: [],
+                  };
+                }
+              })
+            );
+
+            return {
+              name: course.title || 'Untitled Course',
+              image: course.courseImage || 'https://via.placeholder.com/100',
+              totalTopics,
+              completedTopics,
+            };
+          })
+        );
+
+        setCourses(formattedCourses);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        console.log('Error response:', error.response?.data);
+        if (error.response?.status === 401) {
+          setError('Authentication failed. Please check your login status.');
+        } else if (error.response?.status === 500) {
+          setError('Server error while fetching courses. Please try again later.');
+        } else {
+          setError(error.message || 'Failed to fetch courses. Please try again later.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  if (loading) return <Alert variant="info">Loading courses...</Alert>;
+  if (error) {
+    return (
+      <Alert variant="danger">
+        {error}
+        {error.includes('Authentication failed') && (
+          <div>
+            <Button onClick={() => window.location.href = '/login'} className="mt-2">
+              Go to Login
+            </Button>
+          </div>
+        )}
+      </Alert>
+    );
+  }
+
+  return (
+    <>
       <PageMetaData title="Course List Student" />
       <Card className="bg-transparent border rounded-3">
         <CardHeader className="bg-transparent border-bottom">
@@ -63,7 +215,7 @@ const CourseListPage = () => {
               <form className="rounded position-relative">
                 <input className="form-control pe-5 bg-transparent" type="search" placeholder="Search" aria-label="Search" />
                 <button className="bg-transparent p-2 position-absolute top-50 end-0 translate-middle-y border-0 text-primary-hover text-reset" type="submit">
-                  <FaSearch className="fs-6 " />
+                  <FaSearch className="fs-6" />
                 </button>
               </form>
             </Col>
@@ -87,23 +239,25 @@ const CourseListPage = () => {
                     Course Title
                   </th>
                   <th scope="col" className="border-0">
-                    Total Lectures
+                    Total Topics
                   </th>
                   <th scope="col" className="border-0">
-                    Completed Lecture
+                    Completed Topics
                   </th>
                   <th scope="col" className="border-0 rounded-end">
                     Action
                   </th>
                 </tr>
               </thead>
-              {courseData.map((item, idx) => <tbody key={idx}>
-                  <CourseData {...item} />
-                </tbody>)}
+              <tbody>
+                {courses.map((item, idx) => (
+                  <CourseData key={idx} {...item} />
+                ))}
+              </tbody>
             </table>
           </div>
           <div className="d-sm-flex justify-content-sm-between align-items-sm-center mt-4 mt-sm-3">
-            <p className="mb-0 text-center text-sm-start">Showing 1 to 8 of 20 entries</p>
+            <p className="mb-0 text-center text-sm-start">Showing 1 to {courses.length} of {courses.length} entries</p>
             <nav className="d-flex justify-content-center mb-0" aria-label="navigation">
               <ul className="pagination pagination-sm pagination-primary-soft d-inline-block d-md-flex rounded mb-0">
                 <li className="page-item mb-0">
@@ -111,20 +265,8 @@ const CourseListPage = () => {
                     <FaAngleLeft className="icons-center" />
                   </a>
                 </li>
-                <li className="page-item mb-0">
-                  <a className="page-link" href="#">
-                    1
-                  </a>
-                </li>
                 <li className="page-item mb-0 active">
-                  <a className="page-link" href="#">
-                    2
-                  </a>
-                </li>
-                <li className="page-item mb-0">
-                  <a className="page-link" href="#">
-                    3
-                  </a>
+                  <a className="page-link" href="#">1</a>
                 </li>
                 <li className="page-item mb-0">
                   <a className="page-link" href="#">
@@ -136,6 +278,8 @@ const CourseListPage = () => {
           </div>
         </CardBody>
       </Card>
-    </>;
+    </>
+  );
 };
+
 export default CourseListPage;

@@ -188,6 +188,13 @@ export const STUDENT_MENU_ITEMS = [{
   icon: FaRegFileAlt,
   url: '/student/course-resume',
   parentKey: 'student'
+}, 
+ {
+  key: 'resume',
+  label: 'My certificate',
+  icon: FaRegFileAlt,
+  url: '/student/subscription',
+  parentKey: 'student'
 },  {
   key: 'profile',
   label: 'Edit Profile',

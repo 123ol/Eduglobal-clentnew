@@ -32,7 +32,7 @@ const Banner = ({
                     <ul className="list-inline mb-0">
                       <li className="list-inline-item me-3 mb-1 mb-sm-0">
                         <span className="h6">255</span>
-                        &nbsp;<span className="text-body fw-light">points</span>
+                        &nbsp;<span className="text-body fw-light">pointsd</span>
                       </li>
                       <li className="list-inline-item me-3 mb-1 mb-sm-0">
                         <span className="h6">7</span>

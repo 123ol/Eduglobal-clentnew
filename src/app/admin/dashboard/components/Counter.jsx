@@ -73,7 +73,7 @@ const Counter = () => {
   // Fetch total students
   const fetchStudents = async (token) => {
     try {
-      const studentsResponse = await fetch('https://eduglobal-servernew-1.onrender.com/api/total', {
+      const studentsResponse = await fetch('https://eduglobal-servernew-1.onrender.com/api/students', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

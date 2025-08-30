@@ -1,17 +1,116 @@
+import { useState, useEffect } from 'react';
 import avatar9 from '@/assets/images/avatar/09.jpg';
 import patternImg from '@/assets/images/pattern/04.png';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import { FaSlidersH } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-const Banner = ({
-  toggleOffCanvas
-}) => {
-  return <section className="pt-0">
+import Cookies from 'js-cookie';
+import axios from 'axios';
+
+const Banner = ({ toggleOffCanvas }) => {
+  const [userName, setUserName] = useState('User');
+  const [completedCourses, setCompletedCourses] = useState(0);
+  const [completedTopics, setCompletedTopics] = useState(0);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserDataAndProgress = async () => {
+      try {
+        // Get token from cookies
+        const cookieValue = Cookies.get('_EduGlobal_AUTH_KEY_');
+        if (!cookieValue) {
+          throw new Error('No authentication token found. Please log in.');
+        }
+
+        // Parse cookie
+        let parsed;
+        try {
+          parsed = JSON.parse(cookieValue);
+          if (!parsed.token || !parsed.name) {
+            throw new Error('Invalid cookie data: token or name missing.');
+          }
+          console.log('Parsed cookie:', parsed);
+          setUserName(parsed.name || 'User');
+        } catch (parseError) {
+          console.error('Error parsing cookie value:', parseError);
+          throw new Error('Invalid cookie format. Please log in again.');
+        }
+
+        // Set up headers with token
+        const headers = {
+          Authorization: `Bearer ${parsed.token}`,
+          'Content-Type': 'application/json',
+        };
+
+        // Fetch enrolled courses
+        const coursesResponse = await axios.get(
+          'https://eduglobal-servernew-1.onrender.com/api/courses/user/courses',
+          { headers }
+        );
+        console.log('Enrolled courses response:', coursesResponse.data);
+
+        const coursesData = Array.isArray(coursesResponse.data)
+          ? coursesResponse.data
+          : coursesResponse.data.courses || coursesResponse.data.enrolledCourses || [coursesResponse.data];
+
+        // Calculate completion statistics
+        let totalCompletedCourses = 0;
+        let totalCompletedTopics = 0;
+
+        await Promise.all(
+          coursesData.map(async (course) => {
+            const lectures = course.lectures || [];
+            let courseTotalTopics = 0;
+            let courseCompletedTopics = 0;
+
+            // Fetch topics for each lecture
+            await Promise.all(
+              lectures.map(async (lecture) => {
+                try {
+                  const topicsResponse = await axios.get(
+                    `https://eduglobal-servernew-1.onrender.com/api/lectures/${lecture._id}/topics`,
+                    { headers }
+                  );
+                  console.log(`Topic API response for lecture ${lecture._id}:`, topicsResponse.data);
+
+                  const topics = topicsResponse.data || [];
+                  courseTotalTopics += topics.length;
+                  courseCompletedTopics += topics.filter((topic) => topic.completed).length;
+                } catch (topicError) {
+                  console.error(`Error fetching topics for lecture ${lecture._id}:`, topicError);
+                }
+              })
+            );
+
+            // Course is completed if all topics are completed
+            if (courseTotalTopics > 0 && courseCompletedTopics === courseTotalTopics) {
+              totalCompletedCourses += 1;
+            }
+            totalCompletedTopics += courseCompletedTopics;
+          })
+        );
+
+        setCompletedCourses(totalCompletedCourses);
+        setCompletedTopics(totalCompletedTopics);
+      } catch (error) {
+        console.error('Error fetching user data or progress:', error);
+        setError(error.message || 'Failed to load user data or progress.');
+      }
+    };
+
+    fetchUserDataAndProgress();
+  }, []);
+
+  return (
+    <section className="pt-0">
       <Container fluid className="px-0">
-        <Card className="bg-blue h-100px h-md-200px rounded-0" style={{
-        background: `url(${patternImg}) no-repeat center center`,
-        backgroundSize: 'cover'
-      }}></Card>
+        <Card
+          className="bg-blue h-100px h-md-200px rounded-0"
+          style={{
+            background: `url(${patternImg}) no-repeat center center`,
+            backgroundSize: 'cover',
+          }}
+        ></Card>
       </Container>
       <Container className="mt-n4">
         <Row>
@@ -20,7 +119,11 @@ const Banner = ({
               <Row className="d-sm-flex justify-sm-content-between mt-2 mt-md-0">
                 <Col xs={'auto'}>
                   <div className="avatar avatar-xxl position-relative mt-n3">
-                    <img className="avatar-img rounded-circle border border-white border-3 shadow" src={avatar9} alt="avatar" />
+                    <img
+                      className="avatar-img rounded-circle border border-white border-3 shadow"
+                      src={avatar9}
+                      alt="avatar"
+                    />
                     <span className="badge text-bg-success rounded-pill position-absolute top-50 start-100 translate-middle mt-4 mt-md-5 ms-n3 px-md-3">
                       Pro
                     </span>
@@ -28,19 +131,15 @@ const Banner = ({
                 </Col>
                 <Col className="d-sm-flex justify-content-between align-items-center">
                   <div>
-                    <h1 className="my-1 fs-4">Lori Stevens</h1>
+                    <h1 className="my-1 fs-4">{userName}</h1>
                     <ul className="list-inline mb-0">
                       <li className="list-inline-item me-3 mb-1 mb-sm-0">
-                        <span className="h6">255</span>
-                        &nbsp;<span className="text-body fw-light">points</span>
-                      </li>
-                      <li className="list-inline-item me-3 mb-1 mb-sm-0">
-                        <span className="h6">7</span>
+                        <span className="h6">{completedCourses}</span>
                         &nbsp;<span className="text-body fw-light">Completed courses</span>
                       </li>
                       <li className="list-inline-item me-3 mb-1 mb-sm-0">
-                        <span className="h6">52</span>
-                        &nbsp; <span className="text-body fw-light">Completed lessons</span>
+                        <span className="h6">{completedTopics}</span>
+                        &nbsp;<span className="text-body fw-light">Completed lessons</span>
                       </li>
                     </ul>
                   </div>
@@ -57,13 +156,22 @@ const Banner = ({
               <a className="h6 mb-0 fw-bold d-xl-none" href="#">
                 Menu
               </a>
-              <button onClick={toggleOffCanvas} className="btn btn-primary d-xl-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
+              <button
+                onClick={toggleOffCanvas}
+                className="btn btn-primary d-xl-none"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasSidebar"
+                aria-controls="offcanvasSidebar"
+              >
                 <FaSlidersH />
               </button>
             </Col>
           </Col>
         </Row>
       </Container>
-    </section>;
+    </section>
+  );
 };
+
 export default Banner;
